@@ -1,6 +1,6 @@
 <?php
 
-namespace Codino\EloquentHistory;
+namespace Imanghafoori\EloquentHistory;
 
 use Illuminate\Support\ServiceProvider;
 

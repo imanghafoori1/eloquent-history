@@ -1,6 +1,6 @@
 <?php
 
-namespace Codino\EloquentHistory;
+namespace Imanghafoori\EloquentHistory;
 
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
@@ -9,6 +9,30 @@ use Illuminate\Database\Eloquent\Model;
 class HistoryTracker
 {
     private static $ignore = [];
+
+    public static function hasEverHad($serviceId, $colName, $value, $tableName)
+    {
+        $row = DB::table($tableName)->where([
+            'id' => $serviceId,
+            $colName => $value,
+        ])->first();
+
+        return $row ?: self::getTable()->where([
+            'col_name' => $colName,
+            'row_id' => $serviceId,
+            'table_name' => $tableName,
+            'value' => $value,
+        ])->first();
+    }
+
+    public static function getChanges($model, array $cols)
+    {
+        return self::getTable()
+            ->where(['table_name' => $model->getTable(), 'row_id' => $model->id])
+            ->whereIn('col_name', $cols)
+            ->orderBy('data_changes.id', 'DESC')
+            ->get();
+    }
 
     public static function getHistoryOf($model, $columns)
     {
@@ -74,7 +98,7 @@ class HistoryTracker
 
     private static function saveDataChanges(Model $model)
     {
-        $id = DB::table('data_changes_meta')->insertGetId([
+        return DB::table('data_changes_meta')->insertGetId([
             'created_at' => now(),
             'user_id' => auth()->id(),
             'row_id' => $model->id,
@@ -82,8 +106,6 @@ class HistoryTracker
             'ip' => request()->ip(),
             'route' => request()->route()->getName() ?? request()->route()->uri(),
         ]);
-
-        return $id;
     }
 
     private static function commitChanges($model)
@@ -99,11 +121,15 @@ class HistoryTracker
 
     private static function queryChanges($model)
     {
-        return DB::table('data_changes_meta')
-            ->join('data_changes_meta', 'data_changes.id', '=', 'change_id')
+        return self::getTable()
             ->where('row_id', $model->id)
             ->where('table_name', $model->getTable())
             ->orderBy('data_changes.id', 'DESC')
             ->get();
+    }
+
+    private static function getTable()
+    {
+        return DB::table('data_changes')->join('data_changes_meta', 'data_changes_meta.id', '=', 'change_id');
     }
 }
