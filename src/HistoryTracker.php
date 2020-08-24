@@ -34,7 +34,7 @@ class HistoryTracker
             ->get();
     }
 
-    public static function getHistoryOf($model, $columns)
+    public static function getHistoryOf($model, $columns, $importantCols = [])
     {
         // build the final state of the model.
         $base = [ 'created_at' => (string) $model->updated_at];
@@ -45,13 +45,15 @@ class HistoryTracker
         $updates = [];
         $changes = self::queryChanges($model);
         foreach ($changes as $i => $change) {
-            if (in_array($change->col_name, $columns)) { // optimization
-                $base[$change->col_name] = $change->value;
+            if ($importantCols && in_array($change->col_name, $importantCols)) {
+                if (in_array($change->col_name, $columns)) { // optimization
+                    $base[$change->col_name] = $change->value;
+                }
+                $changeId = $change->change_id;
+                $updates[$changeId] = $base;
+                $updates[$changeId]['user_id'] = $change->user_id;
+                $updates[$changeId]['created_at'] = $change->created_at;
             }
-            $changeId = $change->change_id;
-            $updates[$changeId] = $base;
-            $updates[$changeId]['user_id'] = $change->user_id;
-            $updates[$changeId]['created_at'] = $change->created_at;
         }
 
         return $updates;
