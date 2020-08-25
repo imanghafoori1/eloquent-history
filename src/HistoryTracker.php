@@ -45,10 +45,10 @@ class HistoryTracker
         $updates = [];
         $changes = self::queryChanges($model);
         foreach ($changes as $i => $change) {
-            if (in_array($change->col_name, $columns)) { // optimization
-                $base[$change->col_name] = $change->value;
-            }
             if ($importantCols && in_array($change->col_name, $importantCols)) {
+                if (in_array($change->col_name, $columns)) { // optimization
+                    $base[$change->col_name] = $change->value;
+                }
                 $changeId = $change->change_id;
                 $updates[$changeId] = $base;
                 $updates[$changeId]['c__user_id'] = $change->user_id;
@@ -63,8 +63,11 @@ class HistoryTracker
     {
         self::$ignore[$model] = $except;
 
-        $model::saving(function ($model) {
+        $model::updating(function ($model) {
             self::saveChanges($model, $model->getDirty());
+        });
+        $model::created(function ($model) {
+            self::saveChanges($model, $model->getAttributes());
         });
 
         $model::deleting(function ($model) {
@@ -113,6 +116,9 @@ class HistoryTracker
     private static function commitChanges($model)
     {
         $model::updated(function () {
+            DB::commit();
+        });
+        $model::created(function () {
             DB::commit();
         });
 
