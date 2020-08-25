@@ -45,14 +45,14 @@ class HistoryTracker
         $updates = [];
         $changes = self::queryChanges($model);
         foreach ($changes as $i => $change) {
+            if (in_array($change->col_name, $columns)) { // optimization
+                $base[$change->col_name] = $change->value;
+            }
             if ($importantCols && in_array($change->col_name, $importantCols)) {
-                if (in_array($change->col_name, $columns)) { // optimization
-                    $base[$change->col_name] = $change->value;
-                }
                 $changeId = $change->change_id;
                 $updates[$changeId] = $base;
-                $updates[$changeId]['user_id'] = $change->user_id;
-                $updates[$changeId]['created_at'] = $change->created_at;
+                $updates[$changeId]['c__user_id'] = $change->user_id;
+                $updates[$changeId]['c__created_at'] = $change->created_at;
             }
         }
 
@@ -63,7 +63,7 @@ class HistoryTracker
     {
         self::$ignore[$model] = $except;
 
-        $model::updating(function ($model) {
+        $model::saving(function ($model) {
             self::saveChanges($model, $model->getDirty());
         });
 
@@ -91,7 +91,7 @@ class HistoryTracker
         foreach ($attrs as $key => $val) {
             $data[] = [
                 'col_name' => $key,
-                'value' => $model->getOriginal($key),
+                'value' => $val,
                 'change_id' => $id
             ];
         }
@@ -102,7 +102,7 @@ class HistoryTracker
     {
         return DB::table('data_changes_meta')->insertGetId([
             'created_at' => now(),
-            'user_id' => auth()->id(),
+            'user_id' => auth()->id() ?: 0,
             'row_id' => $model->id,
             'table_name' => $model->getTable(),
             'ip' => request()->ip(),
