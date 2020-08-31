@@ -59,4 +59,4 @@ here you have to exclude the password column otherwise the submissions of other 
 HistoryTracker::getChanges($user, ['first_name', 'last_name'], ['first_name', 'last_name', 'bio']);
 ```
 
-Here we not want to show bio on the table but we want to show other meta data about that, for example the date and the username.
+Here we don't want to show bio on the table but we want to show other meta data about that, for example the date and the username.
