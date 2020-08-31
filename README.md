@@ -2,6 +2,8 @@
 
 It keeps tracks your table rows and just like git, it only records changes on each edit.
 
+[![Latest Stable Version](https://poser.pugx.org/imanghafoori/eloquent-history/v/stable)](https://packagist.org/packages/imanghafoori/eloquent-history)
+
 ## Installation:
 ```
 composer require imanghafoori/eloquent-history
