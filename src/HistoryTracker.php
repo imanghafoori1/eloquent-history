@@ -10,16 +10,16 @@ class HistoryTracker
 {
     private static $ignore = [];
 
-    public static function hasEverHad($serviceId, $colName, $value, $tableName)
+    public static function hasEverHad($modelId, $colName, $value, $tableName)
     {
         $row = DB::table($tableName)->where([
-            'id' => $serviceId,
+            'id' => $modelId,
             $colName => $value,
         ])->first();
 
         return $row ?: self::getTable()->where([
             'col_name' => $colName,
-            'row_id' => $serviceId,
+            'row_id' => $modelId,
             'table_name' => $tableName,
             'value' => $value,
         ])->first();
@@ -85,10 +85,10 @@ class HistoryTracker
             return null;
         }
         $id = self::saveDataChanges($model);
-        self::saveChangedAttrs($attrs, $model, $id);
+        self::saveChangedAttrs($attrs, $id);
     }
 
-    private static function saveChangedAttrs($attrs, Model $model, int $id)
+    private static function saveChangedAttrs($attrs, int $id)
     {
         $data = [];
         foreach ($attrs as $key => $val) {
