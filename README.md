@@ -49,7 +49,7 @@ The most important method is the `getHistoryOf` which accepts an eloquent object
 #### $importantCols: What it means ?!
 
 Cosider a situation when you have a table with 10 columns and there are 2 forms to edit column values.
-For example a form to edit `first name`, `last name`, `bio` and etc and an other form to only change password.
+For example a form to edit `first name`, `last name`, `bio` and etc and another form to only change password.
 
 Ok, now you need to show submission history of the first form.
 
@@ -59,4 +59,4 @@ here you have to exclude the password column otherwise the submissions of other 
 HistoryTracker::getChanges($user, ['first_name', 'last_name'], ['first_name', 'last_name', 'bio']);
 ```
 
-Here we not want to show bio on the table but we want to show other meta data about that, for example the date and the username.
+Here we don't want to show bio on the table but we want to show other meta data about that, for example the date and the username.
