@@ -66,13 +66,13 @@ class HistoryTracker
         $model::updating(function ($model) {
             self::saveChanges($model, $model->getDirty());
         });
-        $model::created(function ($model) {
-            self::saveChanges($model, $model->getAttributes());
-        });
 
-        $model::deleting(function ($model) {
+        $saver = function ($model) {
             self::saveChanges($model, $model->getAttributes());
-        });
+        };
+
+        $model::created($saver);
+        $model::deleting($saver);
 
         self::commitChanges($model);
     }
@@ -118,6 +118,7 @@ class HistoryTracker
         $model::updated(function () {
             DB::commit();
         });
+
         $model::created(function () {
             DB::commit();
         });
