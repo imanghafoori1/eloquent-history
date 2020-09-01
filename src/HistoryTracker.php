@@ -10,6 +10,18 @@ class HistoryTracker
 {
     private static $ignore = [];
 
+    private static $trackList = [
+        'updating' => 'getDirty',
+        'created' => 'getAttributes',
+        'deleting' => 'getAttributes',
+    ];
+
+    private static $commitEventList = [
+        'updated',
+        'created',
+        'deleted'
+    ];
+
     public static function hasEverHad($modelId, $colName, $value, $tableName)
     {
         $row = DB::table($tableName)->where([
@@ -45,15 +57,16 @@ class HistoryTracker
         $updates = [];
         $changes = self::queryChanges($model);
         foreach ($changes as $i => $change) {
-            if ($importantCols && in_array($change->col_name, $importantCols)) {
-                if (in_array($change->col_name, $columns)) { // optimization
-                    $base[$change->col_name] = $change->value;
-                }
-                $changeId = $change->change_id;
-                $updates[$changeId] = $base;
-                $updates[$changeId]['c__user_id'] = $change->user_id;
-                $updates[$changeId]['c__created_at'] = $change->created_at;
+            if (!($importantCols && in_array($change->col_name, $importantCols))) {
+                continue;
             }
+            if (in_array($change->col_name, $columns)) { // optimization
+                $base[$change->col_name] = $change->value;
+            }
+            $changeId = $change->change_id;
+            $updates[$changeId] = $base;
+            $updates[$changeId]['c__user_id'] = $change->user_id;
+            $updates[$changeId]['c__created_at'] = $change->created_at;
         }
 
         return $updates;
@@ -63,16 +76,11 @@ class HistoryTracker
     {
         self::$ignore[$model] = $except;
 
-        $model::updating(function ($model) {
-            self::saveChanges($model, $model->getDirty());
-        });
-        $model::created(function ($model) {
-            self::saveChanges($model, $model->getAttributes());
-        });
-
-        $model::deleting(function ($model) {
-            self::saveChanges($model, $model->getAttributes());
-        });
+        foreach (static::$trackList as $event => $method) {
+            $model::$event(function ($model) use ($method) {
+                self::saveChanges($model, $model->{$method}());
+            });
+        }
 
         self::commitChanges($model);
     }
@@ -115,16 +123,11 @@ class HistoryTracker
 
     private static function commitChanges($model)
     {
-        $model::updated(function () {
-            DB::commit();
-        });
-        $model::created(function () {
-            DB::commit();
-        });
-
-        $model::deleted(function () {
-            DB::commit();
-        });
+        foreach (self::$commitEventList as $event) {
+            $model::$event(function () {
+                DB::commit();
+            });
+        }
     }
 
     private static function queryChanges($model)
