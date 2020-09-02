@@ -17,13 +17,13 @@ class IntegrationTest extends TestCase
 
         Route::get('/', function() {});
         $this->get('/');
-
-        $this->trackUser();
     }
 
     /** @test */
     public function tracks_created_model_event()
     {
+        $this->trackUser();
+
         $this->createNewUser();
 
         $this->assertEquals(1, DataChangesMeta::count());
@@ -33,6 +33,8 @@ class IntegrationTest extends TestCase
     /** @test */
     public function tracks_updated_model_event()
     {
+        $this->trackUser();
+
         $user = $this->createNewUser();
         $user->age = 10;
         $user->save();
@@ -51,6 +53,8 @@ class IntegrationTest extends TestCase
     /** @test */
     public function doesnt_track_updated_model_event_when_updating_bulkly()
     {
+        $this->trackUser();
+
         $user = $this->createNewUser();
 
         User::whereId($user->id)->update(['age' => 10]);
@@ -62,6 +66,8 @@ class IntegrationTest extends TestCase
     /** @test */
     public function tracks_deleted_model_event()
     {
+        $this->trackUser();
+
         $user = $this->createNewUser();
 
         User::destroy($user->id);
@@ -77,9 +83,38 @@ class IntegrationTest extends TestCase
         $this->assertEquals(28, DataChange::count());
     }
 
-    private function trackUser()
+    /** @test */
+    public function doesnt_track_excepted_columns()
     {
-        HistoryTracker::track(User::class);
+        $this->trackUser(['age']);
+
+        $user = $this->createNewUser();
+
+        $this->assertEquals(1, DataChangesMeta::count());
+        $this->assertEquals(6, DataChange::count());
+
+        // since this field is not being tracked, it shouldn't submit any new history
+        $user->age = 11;
+        $user->save();
+
+        $this->assertEquals(1, DataChangesMeta::count());
+        $this->assertEquals(6, DataChange::count());
+
+        $user->email = 'iman@laravel.com';
+        $user->save();
+
+        $this->assertEquals(2, DataChangesMeta::count());
+        $this->assertEquals(7, DataChange::count());
+
+        $user->delete();
+
+        $this->assertEquals(3, DataChangesMeta::count());
+        $this->assertEquals(13, DataChange::count());
+    }
+
+    private function trackUser($exceptions = [])
+    {
+        HistoryTracker::track(User::class, $exceptions);
     }
 
     private function createNewUser()
