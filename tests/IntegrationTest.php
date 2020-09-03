@@ -124,19 +124,15 @@ class IntegrationTest extends TestCase
     }
 
     /** @test */
-    public function tracks_model_events_by_using_tracker_trait()
+    public function tracks_model_events_when_using_tracker_trait()
     {
-        Schema::create('temp', function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->string('name');
-            $table->timestamps();
-        });
+        $this->createTempTable();
 
-        $model = (new class extends Model {
+        $model = new class extends Model {
             use WithHistoryTracker;
             protected $table = 'temp';
             protected $guarded = [];
-        });
+        };
 
         $model = $model->create(['name' => 'iman']);
 
@@ -154,6 +150,29 @@ class IntegrationTest extends TestCase
         $this->assertEquals(9, DataChange::count());
     }
 
+    /** @test */
+    public function doesnt_track_excepted_columns_when_using_tracker_trait()
+    {
+        $this->createTempTable();
+
+        $model = new class extends Model {
+            use WithHistoryTracker;
+            private static $historyTrackerExceptions = ['name'];
+            protected $table = 'temp';
+            protected $guarded = [];
+        };
+
+        $model->create(['name' => 'iman']);
+
+        $this->assertEquals(1, DataChangesMeta::count());
+        $this->assertEquals(3, DataChange::count());
+
+        $model->create(['name' => 'iman', 'created_at' => '1']);
+
+        $this->assertEquals(2, DataChangesMeta::count());
+        $this->assertEquals(6, DataChange::count());
+    }
+
     private function trackUser($exceptions = [])
     {
         HistoryTracker::track(User::class, $exceptions);
@@ -167,5 +186,14 @@ class IntegrationTest extends TestCase
     private function untrackAllModels(): void
     {
         (new ReflectionClass(HistoryTracker::class))->setStaticPropertyValue('ignore', []);
+    }
+
+    private function createTempTable()
+    {
+        Schema::create('temp', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->string('name');
+            $table->timestamps();
+        });
     }
 }
