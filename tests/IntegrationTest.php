@@ -7,6 +7,7 @@ use Imanghafoori\EloquentHistory\HistoryTracker;
 use Imanghafoori\EloquentHistory\Tests\Stubs\Models\DataChange;
 use Imanghafoori\EloquentHistory\Tests\Stubs\Models\DataChangesMeta;
 use Imanghafoori\EloquentHistory\Tests\Stubs\Models\User;
+use ReflectionClass;
 
 class IntegrationTest extends TestCase
 {
@@ -17,6 +18,12 @@ class IntegrationTest extends TestCase
 
         Route::get('/', function() {});
         $this->get('/');
+    }
+
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+        $this->untrackAllModels();
     }
 
     /** @test */
@@ -56,6 +63,9 @@ class IntegrationTest extends TestCase
         $this->trackUser();
 
         $user = $this->createNewUser();
+
+        $this->assertEquals(1, DataChangesMeta::count());
+        $this->assertEquals(7, DataChange::count());
 
         User::whereId($user->id)->update(['age' => 10]);
 
@@ -112,6 +122,31 @@ class IntegrationTest extends TestCase
         $this->assertEquals(13, DataChange::count());
     }
 
+    /** @test */
+    public function doesnt_track_model_events_multiple_times()
+    {
+        $this->trackUser();
+        $this->trackUser();
+        $this->trackUser();
+
+        $this->createNewUser();
+
+        $this->assertEquals(1, DataChangesMeta::count());
+        $this->assertEquals(7, DataChange::count());
+    }
+
+    /** @test */
+    public function excepted_attributes_can_be_overwritten()
+    {
+        $this->trackUser();
+        $this->trackUser(['age']);
+
+        $this->createNewUser();
+
+        $this->assertEquals(1, DataChangesMeta::count());
+        $this->assertEquals(6, DataChange::count());
+    }
+
     private function trackUser($exceptions = [])
     {
         HistoryTracker::track(User::class, $exceptions);
@@ -120,5 +155,10 @@ class IntegrationTest extends TestCase
     private function createNewUser()
     {
         return factory(User::class)->create();
+    }
+
+    private function untrackAllModels(): void
+    {
+        (new ReflectionClass(HistoryTracker::class))->setStaticPropertyValue('ignore', []);
     }
 }
