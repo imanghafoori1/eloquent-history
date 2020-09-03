@@ -159,9 +159,9 @@ class IntegrationTest extends TestCase
         HistoryTracker::track(User::class, $exceptions);
     }
 
-    private function createNewUser($factory = null)
+    private function createNewUser()
     {
-        return factory($factory ?? User::class)->create();
+        return factory(User::class)->create();
     }
 
     private function untrackAllModels(): void
