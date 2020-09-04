@@ -3,6 +3,7 @@
 namespace Imanghafoori\EloquentHistory;
 
 use Illuminate\Support\Arr;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Model;
 
@@ -61,18 +62,25 @@ class HistoryTracker
 
     public static function track($model, $except = [])
     {
+        // We avoid setting listeners more than once.
+        if (array_key_exists($model, self::$ignore)) {
+            // to override $ignored columns.
+            self::$ignore[$model] = $except;
+            return null;
+        }
+
         self::$ignore[$model] = $except;
 
         $model::updating(function ($model) {
             self::saveChanges($model, $model->getDirty());
         });
-        $model::created(function ($model) {
-            self::saveChanges($model, $model->getAttributes());
-        });
 
-        $model::deleting(function ($model) {
+        $saver = function ($model) {
             self::saveChanges($model, $model->getAttributes());
-        });
+        };
+
+        $model::created($saver);
+        $model::deleting($saver);
 
         self::commitChanges($model);
     }
@@ -81,11 +89,10 @@ class HistoryTracker
     {
         DB::beginTransaction();
         $attrs = Arr::except($attrs, self::$ignore[get_class($model)]);
-        if (! $attrs) {
-            return null;
+        if ($attrs) {
+            $id = self::saveDataChanges($model);
+            self::saveChangedAttrs($attrs, $id);
         }
-        $id = self::saveDataChanges($model);
-        self::saveChangedAttrs($attrs, $id);
     }
 
     private static function saveChangedAttrs($attrs, int $id)
@@ -103,28 +110,24 @@ class HistoryTracker
 
     private static function saveDataChanges(Model $model)
     {
-        return DB::table('data_changes_meta')->insertGetId([
-            'created_at' => now(),
-            'user_id' => auth()->id() ?: 0,
-            'row_id' => $model->id,
-            'table_name' => $model->getTable(),
-            'ip' => request()->ip(),
-            'route' => request()->route()->getName() ?? request()->route()->uri(),
-        ]);
+        $uid = auth()->id() ?: 0;
+        $rowId = $model->id;
+        $table = $model->getTable();
+        $ip = request()->ip();
+        $route = request()->route()->getName() ?? request()->route()->uri();
+
+        return self::saveMetaData(now(), $uid, $rowId, $table, $ip, $route);
     }
 
     private static function commitChanges($model)
     {
-        $model::updated(function () {
+        $commit = function () {
             DB::commit();
-        });
-        $model::created(function () {
-            DB::commit();
-        });
+        };
 
-        $model::deleted(function () {
-            DB::commit();
-        });
+        $model::updated($commit);
+        $model::created($commit);
+        $model::deleted($commit);
     }
 
     private static function queryChanges($model)
@@ -139,5 +142,17 @@ class HistoryTracker
     private static function getTable()
     {
         return DB::table('data_changes')->join('data_changes_meta', 'data_changes_meta.id', '=', 'change_id');
+    }
+
+    private static function saveMetaData(Carbon $time, $uid, $rowId, $table, $ip, $route)
+    {
+        return DB::table('data_changes_meta')->insertGetId([
+            'created_at' => $time,
+            'user_id' => $uid,
+            'row_id' => $rowId,
+            'table_name' => $table,
+            'ip' => $ip,
+            'route' => $route,
+        ]);
     }
 }

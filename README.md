@@ -1,13 +1,10 @@
 # Eloquent History Tracker
 
 
-
-It keeps tracks your table rows and just like git, it only records changes on each edit.
-
+It keeps track of your table rows and just like git, it only records changes for each update you make.
 
 
 [![Latest Stable Version](https://poser.pugx.org/imanghafoori/eloquent-history/v/stable)](https://packagist.org/packages/imanghafoori/eloquent-history)
-
 
 
 ## Installation:
@@ -27,8 +24,6 @@ php artisan migrate
 ## Usage:
 
 ```php
-
-
 
 public function boot()
 
@@ -78,12 +73,9 @@ HistoryTracker::getHistoryOf(Model $model, array $columns, array $importantCols 
 
 HistoryTracker::getChanges(Model $model, array $cols)
 
-
-
 // searches the history for a value in a column.
 
 HistoryTracker::hasEverHad($modelId, string $colName, $value, string $tableName)
-
 
 
 ```
@@ -93,9 +85,7 @@ HistoryTracker::hasEverHad($modelId, string $colName, $value, string $tableName)
 Note: all the queries are done within the transaction to guarantee that you do not end up with inconsistent data.
 
 
-
 The most important method is the `getHistoryOf` which accepts an eloquent object, an array of columns to be fetched and an array of columns to be counted as a change.
-
 
 
 #### $importantCols: What it means ?!
@@ -122,12 +112,7 @@ HistoryTracker::getChanges($user, ['first_name', 'last_name'], ['first_name', 'l
 
 ```
 
-
-
 Here we don't want to show bio on the table but we want to show other metadata about that, for example, the date and the username.
-
-
-
 
 
 
@@ -144,13 +129,9 @@ If you use laravel-widgetize in your open source project, create a pull request 
 
 
 
-
-
 ### :exclamation: Security
 
 If you discover any security-related issues, please use the `security tab` instead of using the issue tracker.
-
-
 
 
 
@@ -160,57 +141,34 @@ As always if you found this package useful and you want to encourage us to maint
 
 
 
-
-
-
-
 ## More from the author:
-
 
 
 ### Laravel Microscope
 
 
-
 :gem: It automatically find bugs in your laravel app
-
 
 
 - https://github.com/imanghafoori1/laravel-microscope
 
-
-
 -------------
 
-
-
 ### Laravel HeyMan
-
-
 
 :gem: It allows to write expressive code to authorize, validate and authenticate.
 
 
-
 - https://github.com/imanghafoori1/laravel-heyman
-
-
 
 --------------
 
 
-
 <p align="center">
-
-  
-
-    I speak to everyone in the same way, whether he is the garbage man or the president of the university.
-
-    
+ 
+    I speak to everyone in the same way, whether he is the garbage man or the president of the university. 
 
     "Albert Einstein"
-
-    
 
 </p>
 
