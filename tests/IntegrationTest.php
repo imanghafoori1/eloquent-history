@@ -2,11 +2,16 @@
 
 namespace Imanghafoori\EloquentHistory\Tests;
 
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
 use Imanghafoori\EloquentHistory\HistoryTracker;
 use Imanghafoori\EloquentHistory\Tests\Stubs\Models\DataChange;
 use Imanghafoori\EloquentHistory\Tests\Stubs\Models\DataChangesMeta;
 use Imanghafoori\EloquentHistory\Tests\Stubs\Models\User;
+use Imanghafoori\EloquentHistory\WithHistoryTracker;
+use ReflectionClass;
 
 class IntegrationTest extends TestCase
 {
@@ -17,6 +22,12 @@ class IntegrationTest extends TestCase
 
         Route::get('/', function() {});
         $this->get('/');
+    }
+
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+        $this->untrackAllModels();
     }
 
     /** @test */
@@ -112,6 +123,56 @@ class IntegrationTest extends TestCase
         $this->assertEquals(13, DataChange::count());
     }
 
+    /** @test */
+    public function tracks_model_events_when_using_tracker_trait()
+    {
+        $this->createTempTable();
+
+        $model = new class extends Model {
+            use WithHistoryTracker;
+            protected $table = 'temp';
+            protected $guarded = [];
+        };
+
+        $model = $model->create(['name' => 'iman']);
+
+        $this->assertEquals(1, DataChangesMeta::count());
+        $this->assertEquals(4, DataChange::count());
+
+        $model->update(['name' => 'mehrad']);
+
+        $this->assertEquals(2, DataChangesMeta::count());
+        $this->assertEquals(5, DataChange::count());
+
+        $model->delete();
+
+        $this->assertEquals(3, DataChangesMeta::count());
+        $this->assertEquals(9, DataChange::count());
+    }
+
+    /** @test */
+    public function doesnt_track_excepted_columns_when_using_tracker_trait()
+    {
+        $this->createTempTable();
+
+        $model = new class extends Model {
+            use WithHistoryTracker;
+            private static $historyTrackerExceptions = ['name'];
+            protected $table = 'temp';
+            protected $guarded = [];
+        };
+
+        $model->create(['name' => 'iman']);
+
+        $this->assertEquals(1, DataChangesMeta::count());
+        $this->assertEquals(3, DataChange::count());
+
+        $model->create(['name' => 'iman', 'created_at' => '1']);
+
+        $this->assertEquals(2, DataChangesMeta::count());
+        $this->assertEquals(6, DataChange::count());
+    }
+
     private function trackUser($exceptions = [])
     {
         HistoryTracker::track(User::class, $exceptions);
@@ -120,5 +181,19 @@ class IntegrationTest extends TestCase
     private function createNewUser()
     {
         return factory(User::class)->create();
+    }
+
+    private function untrackAllModels(): void
+    {
+        (new ReflectionClass(HistoryTracker::class))->setStaticPropertyValue('ignore', []);
+    }
+
+    private function createTempTable()
+    {
+        Schema::create('temp', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->string('name');
+            $table->timestamps();
+        });
     }
 }
