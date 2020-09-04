@@ -11,6 +11,7 @@ use Imanghafoori\EloquentHistory\Tests\Stubs\Models\DataChange;
 use Imanghafoori\EloquentHistory\Tests\Stubs\Models\DataChangesMeta;
 use Imanghafoori\EloquentHistory\Tests\Stubs\Models\User;
 use Imanghafoori\EloquentHistory\WithHistoryTracker;
+
 use ReflectionClass;
 
 class IntegrationTest extends TestCase
@@ -68,6 +69,9 @@ class IntegrationTest extends TestCase
 
         $user = $this->createNewUser();
 
+        $this->assertEquals(1, DataChangesMeta::count());
+        $this->assertEquals(7, DataChange::count());
+
         User::whereId($user->id)->update(['age' => 10]);
 
         $this->assertEquals(1, DataChangesMeta::count());
@@ -124,6 +128,28 @@ class IntegrationTest extends TestCase
     }
 
     /** @test */
+    public function doesnt_track_model_events_multiple_times()
+    {
+        $this->trackUser();
+        $this->trackUser();
+        $this->trackUser();
+
+        $this->createNewUser();
+
+        $this->assertEquals(1, DataChangesMeta::count());
+        $this->assertEquals(7, DataChange::count());
+    }
+
+    /** @test */
+    public function excepted_attributes_can_be_overwritten()
+    {
+        $this->trackUser();
+        $this->trackUser(['age']);
+
+        $this->createNewUser();
+
+        $this->assertEquals(1, DataChangesMeta::count());
+
     public function tracks_model_events_when_using_tracker_trait()
     {
         $this->createTempTable();
@@ -170,6 +196,7 @@ class IntegrationTest extends TestCase
         $model->create(['name' => 'iman', 'created_at' => '1']);
 
         $this->assertEquals(2, DataChangesMeta::count());
+
         $this->assertEquals(6, DataChange::count());
     }
 
@@ -188,6 +215,7 @@ class IntegrationTest extends TestCase
         (new ReflectionClass(HistoryTracker::class))->setStaticPropertyValue('ignore', []);
     }
 
+
     private function createTempTable()
     {
         Schema::create('temp', function (Blueprint $table) {
@@ -196,4 +224,5 @@ class IntegrationTest extends TestCase
             $table->timestamps();
         });
     }
+
 }
