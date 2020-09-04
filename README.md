@@ -37,7 +37,7 @@ public function boot()
 
 ```
 
-As an alternative to registering the `Hisotry Tracker` inside of any of your service providers, You can simply `use` the `WithHistoryTracker` trait inside your desired model(s):
+As an alternative to registering the `Hisotry Tracker` inside any of your service providers, You can simply use the `WithHistoryTracker` trait inside your desired model(s):
 
 ```php
 use Imanghafoori\EloquentHistory\WithHistoryTracker;
