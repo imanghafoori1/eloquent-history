@@ -8,36 +8,25 @@ It keeps track of your table rows and just like git, it only records changes for
 
 
 ## Installation:
-
 ```
-
 composer require imanghafoori/eloquent-history
 
 php artisan vendor:publish
 
 php artisan migrate
-
 ```
-
-
 
 ## Usage:
 
 ```php
-
 public function boot()
-
 {
-
     // here we want to monitor all the table columns except 'remember_token'
-
     HistoryTracker::track('App/User', $except = ['remember_token']);
-
 }
 
 ```
-
-As an alternative to registering the `Hisotry Tracker` inside any of your service providers, You can simply use the `WithHistoryTracker` trait inside your desired model(s):
+Note: As an alternative to registering the `Hisotry Tracker` inside service providers, you can simply use the `WithHistoryTracker` trait inside your desired model(s):
 
 ```php
 use Imanghafoori\EloquentHistory\WithHistoryTracker;
@@ -47,11 +36,9 @@ class User extends Authenticatable
     use WithHistoryTracker;
     
     // here we want to monitor all the table columns except 'remember_token'
-    
     private static $historyTrackerExceptions = ['remember_token']; 
     ...
 }
-
 ``` 
 
 ** Note ** Since this works based on eloquent model events, if you update your rows without firing events the changes would not be recorded.
@@ -61,34 +48,26 @@ This includes performing an update query without fetching the row first.
 So as an example:
 
 ```php
-
-User::update([...]); // this can NOT be monitored.
-
+// This query can NOT be monitored.
+User::update([...]);
 ```
 
 
-
-### PUBLIC API:
-
-
+### Public API:
 
 ```php
 
-
-
 // Get all the history as a nice table
 
-HistoryTracker::getHistoryOf(Model $model, array $columns, array $importantCols = [])
-
-
+HistoryTracker::getHistoryOf(Model $model, array $columns, array $importantCols = []);
 
 // It performs a query on the data changes table and gives you a raw version of changes.
 
-HistoryTracker::getChanges(Model $model, array $cols)
+HistoryTracker::getChanges(Model $model, array $cols);
 
 // searches the history for a value in a column.
 
-HistoryTracker::hasEverHad($modelId, string $colName, $value, string $tableName)
+HistoryTracker::hasEverHad($modelId, string $colName, $value, string $tableName);
 
 
 ```
@@ -109,14 +88,9 @@ Consider a situation when you have a table with 10 columns and there are 2 forms
 
 For example, a form to edit `first name`, `last name`, `bio` and etc, and another form to only change password.
 
-
-
 Ok, now you need to show the submission history of the first form.
 
-
-
-here you have to exclude the password column otherwise the submissions of other forms will appear in the history of the first form.
-
+Here you have to exclude the password column otherwise the submissions of other forms will appear in the history of the first form.
 
 
 ```php
@@ -127,11 +101,7 @@ HistoryTracker::getChanges($user, ['first_name', 'last_name'], ['first_name', 'l
 
 Here we don't want to show bio on the table but we want to show other metadata about that, for example, the date and the username.
 
-
-
-
 --------------------
-
 
 
 ### :raising_hand: Contributing 
