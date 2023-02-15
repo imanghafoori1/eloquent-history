@@ -2,10 +2,10 @@
 
 namespace Imanghafoori\EloquentHistory;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Database\Eloquent\Model;
 
 class HistoryTracker
 {
@@ -14,15 +14,15 @@ class HistoryTracker
     public static function hasEverHad($modelId, $colName, $value, $tableName)
     {
         $row = DB::table($tableName)->where([
-            'id' => $modelId,
+            'id'     => $modelId,
             $colName => $value,
         ])->first();
 
         return $row ?: self::getTable()->where([
-            'col_name' => $colName,
-            'row_id' => $modelId,
+            'col_name'   => $colName,
+            'row_id'     => $modelId,
             'table_name' => $tableName,
-            'value' => $value,
+            'value'      => $value,
         ])->first();
     }
 
@@ -38,7 +38,7 @@ class HistoryTracker
     public static function getHistoryOf($model, $columns, $importantCols = [])
     {
         // build the final state of the model.
-        $base = [ 'created_at' => (string) $model->updated_at];
+        $base = ['created_at' => (string) $model->updated_at];
         foreach ($columns as $_col) {
             $base[$_col] = $model->$_col;
         }
@@ -66,6 +66,7 @@ class HistoryTracker
         if (array_key_exists($model, self::$ignore)) {
             // to override $ignored columns.
             self::$ignore[$model] = $except;
+
             return null;
         }
 
@@ -100,9 +101,9 @@ class HistoryTracker
         $data = [];
         foreach ($attrs as $key => $val) {
             $data[] = [
-                'col_name' => $key,
-                'value' => $val,
-                'change_id' => $id
+                'col_name'  => $key,
+                'value'     => $val,
+                'change_id' => $id,
             ];
         }
         DB::table('data_changes')->insert($data);
@@ -148,11 +149,11 @@ class HistoryTracker
     {
         return DB::table('data_changes_meta')->insertGetId([
             'created_at' => $time,
-            'user_id' => $uid,
-            'row_id' => $rowId,
+            'user_id'    => $uid,
+            'row_id'     => $rowId,
             'table_name' => $table,
-            'ip' => $ip,
-            'route' => $route,
+            'ip'         => $ip,
+            'route'      => $route,
         ]);
     }
 }
