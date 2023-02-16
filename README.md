@@ -7,7 +7,7 @@ It keeps track of your table rows and just like git, it only records changes for
 [![Latest Stable Version](https://poser.pugx.org/imanghafoori/eloquent-history/v/stable)](https://packagist.org/packages/imanghafoori/eloquent-history)
 
 
-## Installation:
+### Installation:
 ```
 composer require imanghafoori/eloquent-history
 
@@ -16,7 +16,7 @@ php artisan vendor:publish
 php artisan migrate
 ```
 
-## Usage:
+### Usage:
 
 ```php
 public function boot()
@@ -72,16 +72,13 @@ HistoryTracker::hasEverHad($modelId, string $colName, $value, string $tableName)
 
 ```
 
-
-
 Note: all the queries are done within the transaction to guarantee that you do not end up with inconsistent data.
 
 
 The most important method is the `getHistoryOf` which accepts an eloquent object, an array of columns to be fetched and an array of columns to be counted as a change.
 
 
-#### $importantCols: What it means ?!
-
+#### $importantCols: What it means?!
 
 
 Consider a situation when you have a table with 10 columns and there are 2 forms to edit column values.
@@ -107,9 +104,6 @@ Here we don't want to show bio on the table but we want to show other metadata a
 ### :raising_hand: Contributing 
 
 If you find an issue or have a better way to do something, feel free to open an issue or a pull request.
-
-If you use laravel-widgetize in your open source project, create a pull request to provide its URL as a sample application in the README.md file. 
-
 
 
 ### :exclamation: Security
